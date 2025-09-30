@@ -17,6 +17,9 @@ interface Product {
   category: string;
   state?: string;
   city?: string;
+  userId?: {
+    verified?: boolean;
+  } | string;
 }
 
 export default function SearchPage() {

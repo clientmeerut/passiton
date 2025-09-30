@@ -31,12 +31,7 @@
   animation: shimmer-run 1.5s infinite linear;
   pointer-events: none;
 } */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* Custom CSS Variables */
 
 @media (prefers-color-scheme: dark) {
   :root {

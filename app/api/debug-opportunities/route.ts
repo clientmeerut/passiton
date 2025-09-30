@@ -35,7 +35,7 @@ export async function GET() {
   } catch (error) {
     console.error('Debug opportunities error:', error);
     return NextResponse.json(
-      { error: 'Failed to debug opportunities', details: error.message },
+      { error: 'Failed to debug opportunities', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
