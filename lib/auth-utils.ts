@@ -52,10 +52,12 @@ export const logout = async (): Promise<boolean> => {
   }
 };
 
-export const withAuth = <P extends object>(Component: React.ComponentType<P>) => {
-  return function AuthenticatedComponent(props: P) {
+export const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>) => {
+  const AuthenticatedComponent: React.FC<P> = (props: P) => {
     // This would be a higher-order component for protecting routes
     // For now, we'll handle auth checks in individual components
-    return <Component {...props} />;
+    return React.createElement(WrappedComponent, props);
   };
+
+  return AuthenticatedComponent;
 };
