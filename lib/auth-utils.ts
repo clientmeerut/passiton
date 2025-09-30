@@ -1,4 +1,5 @@
 // Authentication utility functions for client-side use
+import React from 'react';
 
 export interface User {
   userId: string;
@@ -51,8 +52,8 @@ export const logout = async (): Promise<boolean> => {
   }
 };
 
-export const withAuth = (Component: React.ComponentType<any>) => {
-  return function AuthenticatedComponent(props: any) {
+export const withAuth = <P extends object>(Component: React.ComponentType<P>) => {
+  return function AuthenticatedComponent(props: P) {
     // This would be a higher-order component for protecting routes
     // For now, we'll handle auth checks in individual components
     return <Component {...props} />;
