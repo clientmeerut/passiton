@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { CheckCircle, XCircle, Loader2, Eye, Heart, Briefcase, MapPin, Clock, DollarSign, Plus, Trash2 } from 'lucide-react';
 import UserInfoCard from '@/components/UserInfoCard';
+import { useAuth } from '@/hooks/useAuth';
 
 type Product = {
   _id: string;
@@ -47,29 +48,15 @@ export default function DashboardPage() {
   const [togglingOpportunity, setTogglingOpportunity] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deletingOpportunity, setDeletingOpportunity] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
 
+  // Use the authentication hook
+  const { user, loading: authLoading, isAuthenticated } = useAuth(true);
+
   const fetchData = useCallback(async () => {
+    if (!isAuthenticated) return;
+
     try {
-      // Fetch user info
-      const userRes = await fetch('/api/auth/me', {
-        credentials: 'include',
-        cache: 'no-store'
-      });
-      const userData = await userRes.json();
-
-      if (!userData.loggedIn) {
-        // User is not authenticated, redirect to login
-        setAuthLoading(false);
-        router.push('/auth/login');
-        return;
-      }
-
-      setUser(userData.user);
-      setAuthLoading(false);
-
       // Fetch products
       setLoading(true);
       const productsRes = await fetch('/api/dashboard/products', {
@@ -77,7 +64,6 @@ export default function DashboardPage() {
       });
       const productsData = await productsRes.json();
 
-      // Check if products request failed due to auth
       if (productsRes.status === 401) {
         router.push('/auth/login');
         return;
@@ -93,7 +79,6 @@ export default function DashboardPage() {
       });
       const opportunitiesData = await opportunitiesRes.json();
 
-      // Check if opportunities request failed due to auth
       if (opportunitiesRes.status === 401) {
         router.push('/auth/login');
         return;
@@ -103,17 +88,14 @@ export default function DashboardPage() {
       setOpportunitiesLoading(false);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      // On error, redirect to login to be safe
-      setAuthLoading(false);
-      router.push('/auth/login');
       setLoading(false);
       setOpportunitiesLoading(false);
     }
-  }, [router]);
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // Add focus event listener to refresh data when user returns to tab
   useEffect(() => {

@@ -2,16 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret-key';
-if (JWT_SECRET === 'secret-key' && process.env.NODE_ENV === 'production') {
-  //console.warn('⚠️  Using default JWT secret in production!');
-}
 
 async function verifyJWT(token: string) {
   try {
     const secret = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
     return payload;
-  } catch {
+  } catch (error) {
+    console.log('JWT verification failed:', error);
     return null;
   }
 }
@@ -20,33 +18,26 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const pathname = request.nextUrl.pathname;
 
-  const isPublicPath =
-    pathname === '/' ||
-    pathname.startsWith('/auth') ||
-    pathname.startsWith('/terms') ||
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname.endsWith('.png') ||
-    pathname.endsWith('.jpg') ||
-    pathname.endsWith('.jpeg') ||
-    pathname.endsWith('.svg') ||
-    pathname.endsWith('.webp') ||
-    pathname.endsWith('.ico') ||
-    pathname.endsWith('.gif');
+  // Only protect specific admin and dashboard routes
+  const isProtectedPath =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/list-opportunity');
 
-  if (isPublicPath) {
+  // Skip middleware for non-protected paths
+  if (!isProtectedPath) {
     return NextResponse.next();
   }
 
+  // For protected paths, check authentication
   if (!token) {
-    // Optionally redirect to /auth/login if that's your entry login
+    console.log(`Middleware: No token found for protected path: ${pathname}`);
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
   const payload = await verifyJWT(token);
-
   if (!payload) {
+    console.log(`Middleware: Invalid token for protected path: ${pathname}`);
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
@@ -55,6 +46,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|logo.png|laptop-product.jpg|coset-product.jpg|confetti.png).*)',
+    '/dashboard/:path*',
+    '/admin/:path*',
+    '/list-opportunity/:path*'
   ],
 };

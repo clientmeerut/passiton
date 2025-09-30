@@ -5,7 +5,11 @@ import { User } from '@/models/User';
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get('token')?.value;
-  if (!token) return NextResponse.json({ loggedIn: false });
+
+  if (!token) {
+    console.log('Auth check: No token found in cookies');
+    return NextResponse.json({ loggedIn: false });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
@@ -29,7 +33,10 @@ export async function GET(req: NextRequest) {
 
     await connectToDatabase();
     const user = await User.findById(userId);
-    if (!user) return NextResponse.json({ loggedIn: false });
+    if (!user) {
+      console.log('Auth check: User not found in database for userId:', userId);
+      return NextResponse.json({ loggedIn: false });
+    }
 
     return NextResponse.json({
       loggedIn: true,
@@ -45,7 +52,8 @@ export async function GET(req: NextRequest) {
         mobile: user.mobile,
       },
     });
-  } catch {
+  } catch (error) {
+    console.log('Auth check: JWT verification failed:', error);
     return NextResponse.json({ loggedIn: false });
   }
 }

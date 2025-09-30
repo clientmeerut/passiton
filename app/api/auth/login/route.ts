@@ -28,10 +28,9 @@ export async function POST(req: NextRequest) {
       value: adminToken,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
-      domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost',
     });
     return res;
   }
@@ -56,10 +55,9 @@ export async function POST(req: NextRequest) {
     value: token,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
-    domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost',
   });
   return res;
 }
