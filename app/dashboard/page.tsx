@@ -48,36 +48,68 @@ export default function DashboardPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deletingOpportunity, setDeletingOpportunity] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
 
   const fetchData = useCallback(async () => {
     try {
       // Fetch user info
-      const userRes = await fetch('/api/auth/me');
+      const userRes = await fetch('/api/auth/me', {
+        credentials: 'include',
+        cache: 'no-store'
+      });
       const userData = await userRes.json();
-      if (userData.loggedIn) {
-        setUser(userData.user);
+
+      if (!userData.loggedIn) {
+        // User is not authenticated, redirect to login
+        setAuthLoading(false);
+        router.push('/auth/login');
+        return;
       }
+
+      setUser(userData.user);
+      setAuthLoading(false);
 
       // Fetch products
       setLoading(true);
-      const productsRes = await fetch('/api/dashboard/products');
+      const productsRes = await fetch('/api/dashboard/products', {
+        credentials: 'include'
+      });
       const productsData = await productsRes.json();
+
+      // Check if products request failed due to auth
+      if (productsRes.status === 401) {
+        router.push('/auth/login');
+        return;
+      }
+
       setProducts(productsData.products || []);
       setLoading(false);
 
       // Fetch opportunities
       setOpportunitiesLoading(true);
-      const opportunitiesRes = await fetch('/api/dashboard/opportunities');
+      const opportunitiesRes = await fetch('/api/dashboard/opportunities', {
+        credentials: 'include'
+      });
       const opportunitiesData = await opportunitiesRes.json();
+
+      // Check if opportunities request failed due to auth
+      if (opportunitiesRes.status === 401) {
+        router.push('/auth/login');
+        return;
+      }
+
       setOpportunities(opportunitiesData.opportunities || []);
       setOpportunitiesLoading(false);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      // On error, redirect to login to be safe
+      setAuthLoading(false);
+      router.push('/auth/login');
       setLoading(false);
       setOpportunitiesLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     fetchData();
@@ -186,6 +218,18 @@ export default function DashboardPage() {
     freelance: { icon: "💻", label: "Freelance", color: "bg-pink-100 text-pink-700" },
     event: { icon: "🎪", label: "Event", color: "bg-yellow-100 text-yellow-700" }
   };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#faf7ed] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#5B3DF6] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#5B3DF6] font-semibold text-lg">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#faf7ed] flex flex-col items-center py-10 px-4">

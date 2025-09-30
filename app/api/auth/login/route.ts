@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
+      domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost',
     });
     return res;
   }
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
   const token = jwt.sign(
-    { userId: user._id, email: user.email, fullName: user.fullName, username: user.username, isAdmin: false },
+    { _id: user._id, userId: user._id, email: user.email, fullName: user.fullName, username: user.username, isAdmin: false },
     process.env.JWT_SECRET!,
     { expiresIn: '7d' }
   );
@@ -58,6 +59,7 @@ export async function POST(req: NextRequest) {
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
+    domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost',
   });
   return res;
 }

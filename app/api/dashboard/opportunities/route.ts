@@ -10,9 +10,11 @@ export async function GET(req: NextRequest) {
 
   let userId = '';
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-    // @ts-ignore
-    userId = decoded.userId;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    userId = decoded._id || decoded.userId;
+    if (!userId) {
+      return NextResponse.json({ error: 'Invalid token structure' }, { status: 401 });
+    }
   } catch {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
