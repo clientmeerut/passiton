@@ -24,6 +24,24 @@ export function LogoutButton() {
     };
 
     checkAuth();
+
+    // Listen for focus events to refresh auth status when user returns to page
+    const handleFocus = () => {
+      checkAuth();
+    };
+
+    // Listen for custom logout event
+    const handleLogoutEvent = () => {
+      setLoggedIn(false);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('userLoggedOut', handleLogoutEvent);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('userLoggedOut', handleLogoutEvent);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -34,8 +52,14 @@ export function LogoutButton() {
       });
 
       if (res.ok) {
-        window.location.href = "/";
+        // Update local state immediately
+        setLoggedIn(false);
 
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent('userLoggedOut'));
+
+        // Use router for client-side navigation
+        router.push("/");
       } else {
         alert("Failed to logout. Please try again.");
       }
@@ -46,9 +70,7 @@ export function LogoutButton() {
   };
 
   const handleLoginRedirect = () => {
-    
-    window.location.href = "/auth/login";
-
+    router.push("/auth/login");
   };
 
   if (loggedIn === null) return null; // Optionally show spinner here

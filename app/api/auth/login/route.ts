@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { SignJWT } from 'jose';
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/lib/db';
 import { User } from '@/models/User';
@@ -11,24 +11,24 @@ export async function POST(req: NextRequest) {
 
   // Check for admin credentials
   if (email === 'admin' && password === 'adminpassword01') {
-    const adminToken = jwt.sign(
-      {
-        userId: 'admin',
-        email: 'admin',
-        fullName: 'Administrator',
-        username: 'admin',
-        isAdmin: true
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
-    );
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+    const adminToken = await new SignJWT({
+      userId: 'admin',
+      email: 'admin',
+      fullName: 'Administrator',
+      username: 'admin',
+      isAdmin: true
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime('7d')
+      .sign(secret);
     const res = NextResponse.json({ success: true, isAdmin: true });
     res.cookies.set({
       name: 'token',
       value: adminToken,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
     });
@@ -44,18 +44,25 @@ export async function POST(req: NextRequest) {
   if (!isPasswordCorrect) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
-  const token = jwt.sign(
-    { _id: user._id, userId: user._id, email: user.email, fullName: user.fullName, username: user.username, isAdmin: false },
-    process.env.JWT_SECRET!,
-    { expiresIn: '7d' }
-  );
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+  const token = await new SignJWT({
+    _id: user._id,
+    userId: user._id,
+    email: user.email,
+    fullName: user.fullName,
+    username: user.username,
+    isAdmin: false
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('7d')
+    .sign(secret);
   const res = NextResponse.json({ success: true, isAdmin: false });
   res.cookies.set({
     name: 'token',
     value: token,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
   });

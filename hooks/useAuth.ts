@@ -77,6 +77,21 @@ export const useAuth = (redirectToLogin: boolean = false) => {
     };
 
     checkAuth();
+
+    // Listen for logout events
+    const handleLogoutEvent = () => {
+      setAuthState({
+        user: null,
+        loading: false,
+        isAuthenticated: false,
+      });
+    };
+
+    window.addEventListener('userLoggedOut', handleLogoutEvent);
+
+    return () => {
+      window.removeEventListener('userLoggedOut', handleLogoutEvent);
+    };
   }, [redirectToLogin, router]);
 
   const logout = async () => {
