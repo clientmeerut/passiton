@@ -47,7 +47,7 @@ export async function middleware(request: NextRequest) {
 
   // Additional check for admin routes
   if (pathname.startsWith('/admin')) {
-    const user = payload as any;
+    const user = payload as { isAdmin?: boolean; [key: string]: any };
     if (!user.isAdmin) {
       console.log(`Middleware: Non-admin user attempted to access admin path: ${pathname}`);
       return NextResponse.redirect(new URL('/', request.url));
