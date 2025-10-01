@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
 
   if (!token) {
     console.log('Auth check: No token found in cookies');
+    console.log('Available cookies:', req.cookies.getAll().map(c => c.name));
     return NextResponse.json({ loggedIn: false, debug: 'no_token' });
   }
 

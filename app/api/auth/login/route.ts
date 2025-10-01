@@ -47,15 +47,33 @@ export async function POST(req: NextRequest) {
     return res;
   }
 
-  await connectToDatabase();
+  try {
+    await connectToDatabase();
+    console.log('Database connected successfully');
+  } catch (dbError) {
+    console.error('Database connection failed:', dbError);
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
+
   const user = await User.findOne({ email });
+  console.log('User lookup result:', user ? 'User found' : 'User not found', 'for email:', email);
+
   if (!user) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
+  console.log('Password comparison:', {
+    provided: password ? 'password provided' : 'no password',
+    stored: user.password ? 'hash exists' : 'no hash in db',
+    match: isPasswordCorrect
+  });
+
   if (!isPasswordCorrect) {
+    console.log('Login failed: password mismatch for user:', email);
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
+
+  console.log('Login successful for user:', email);
   const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
   const token = await new SignJWT({
     _id: user._id,

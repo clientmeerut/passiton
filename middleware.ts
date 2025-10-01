@@ -36,6 +36,7 @@ export async function middleware(request: NextRequest) {
   // For protected paths, check authentication
   if (!token) {
     console.log(`Middleware: No token found for protected path: ${pathname}`);
+    console.log('Available cookies in middleware:', request.cookies.getAll().map(c => c.name));
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
