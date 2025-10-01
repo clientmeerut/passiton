@@ -58,8 +58,10 @@ export function LogoutButton() {
         // Dispatch custom event to notify other components
         window.dispatchEvent(new CustomEvent('userLoggedOut'));
 
-        // Use router for client-side navigation
-        router.push("/");
+        // Force a full page reload to clear all cached data and ensure complete logout
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 100);
       } else {
         alert("Failed to logout. Please try again.");
       }

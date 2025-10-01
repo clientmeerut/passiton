@@ -6,13 +6,15 @@ import { User } from '@/models/User';
 export async function GET(req: NextRequest) {
   const token = req.cookies.get('token')?.value;
 
-  // Enhanced debugging
-  console.log('=== AUTH DEBUG ===');
-  console.log('Token exists:', !!token);
-  console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
-  console.log('Environment:', process.env.NODE_ENV);
-  console.log('Request URL:', req.url);
-  console.log('All cookies:', req.cookies.getAll());
+  // Only log in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('=== AUTH DEBUG ===');
+    console.log('Token exists:', !!token);
+    console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('Request URL:', req.url);
+    console.log('All cookies:', req.cookies.getAll());
+  }
 
   if (!token) {
     console.log('Auth check: No token found in cookies');

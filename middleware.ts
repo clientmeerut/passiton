@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
 
 async function verifyJWT(token: string) {
   try {
@@ -39,6 +43,15 @@ export async function middleware(request: NextRequest) {
   if (!payload) {
     console.log(`Middleware: Invalid token for protected path: ${pathname}`);
     return NextResponse.redirect(new URL('/auth/login', request.url));
+  }
+
+  // Additional check for admin routes
+  if (pathname.startsWith('/admin')) {
+    const user = payload as any;
+    if (!user.isAdmin) {
+      console.log(`Middleware: Non-admin user attempted to access admin path: ${pathname}`);
+      return NextResponse.redirect(new URL('/', request.url));
+    }
   }
 
   return NextResponse.next();

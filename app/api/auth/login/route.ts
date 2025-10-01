@@ -7,10 +7,22 @@ import { User } from '@/models/User';
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
+  // Validate required environment variables
+  if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET environment variable is not set');
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+  }
+
   const { email, password } = await req.json();
 
-  // Check for admin credentials
-  if (email === 'admin' && password === 'adminpassword01') {
+  // Validate input
+  if (!email || !password) {
+    return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+  }
+
+  // Check for admin credentials from environment variables
+  if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD &&
+      email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
     const adminToken = await new SignJWT({
       userId: 'admin',

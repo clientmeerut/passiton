@@ -27,20 +27,52 @@ export default function UserInfoCard() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.user) {
-          setUser(data.user);
-          setForm({
-            fullName: data.user.fullName || "",
-            username: data.user.username || "",
-            collegeIdUrl: data.user.collegeIdUrl || "",
-            mobile: data.user.mobile || "",
-            collegeName: data.user.collegeName || "",
-          });
-        }
+    const fetchUser = () => {
+      fetch("/api/auth/me", { credentials: "include" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.user) {
+            setUser(data.user);
+            setForm({
+              fullName: data.user.fullName || "",
+              username: data.user.username || "",
+              collegeIdUrl: data.user.collegeIdUrl || "",
+              mobile: data.user.mobile || "",
+              collegeName: data.user.collegeName || "",
+            });
+          } else {
+            // Clear user data if not logged in
+            setUser(null);
+            setForm({
+              fullName: "",
+              username: "",
+              collegeIdUrl: "",
+              mobile: "",
+              collegeName: "",
+            });
+          }
+        });
+    };
+
+    fetchUser();
+
+    // Listen for logout events
+    const handleLogoutEvent = () => {
+      setUser(null);
+      setForm({
+        fullName: "",
+        username: "",
+        collegeIdUrl: "",
+        mobile: "",
+        collegeName: "",
       });
+    };
+
+    window.addEventListener('userLoggedOut', handleLogoutEvent);
+
+    return () => {
+      window.removeEventListener('userLoggedOut', handleLogoutEvent);
+    };
   }, []);
 
   const handleEdit = () => setEditing(true);

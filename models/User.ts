@@ -9,7 +9,8 @@ const UserSchema = new Schema({
   verified: { type: Boolean, default: false },     // new
   createdAt: { type: Date, default: Date.now },
   mobile: { type: String },                  // new -> optional, editable via card
-  collegeName: { type: String },  
+  collegeName: { type: String },
+  isAdmin: { type: Boolean, default: false },      // Add admin field
 });
 
 
