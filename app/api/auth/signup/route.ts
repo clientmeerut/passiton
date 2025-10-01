@@ -2,12 +2,24 @@ import { connectToDatabase } from '@/lib/db';
 import { User } from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rate-limit';
+import { validateEnvironment } from '@/lib/env';
 
-export async function POST(req: Request) {
-  // Validate JWT_SECRET exists
-  if (!process.env.JWT_SECRET) {
-    console.error('JWT_SECRET environment variable is not set');
+export async function POST(req: NextRequest) {
+  // Rate limiting
+  const rateLimitResult = rateLimit(req, 3, 60 * 60 * 1000); // 3 signups per hour
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many signup attempts. Please try again later.' },
+      { status: 429 }
+    );
+  }
+
+  // Validate environment
+  try {
+    validateEnvironment();
+  } catch (error) {
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
@@ -19,8 +31,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
   }
 
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+  }
+
+  // Password strength validation
+  if (password.length < 8) {
+    return NextResponse.json({ error: 'Password must be at least 8 characters long' }, { status: 400 });
+  }
+
   const hashed = await bcrypt.hash(password, 10);
-  console.log('Creating user with email:', email);
 
   try {
     const existingEmailUser = await User.findOne({ email });

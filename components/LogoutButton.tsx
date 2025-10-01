@@ -13,12 +13,12 @@ export function LogoutButton() {
     const checkAuth = async () => {
       try {
         const res = await fetch("/api/auth/me", {
-          credentials: "include", // ✅ Required to send cookies
+          credentials: "include",
+          cache: "no-store", // Force fresh check
         });
         const data = await res.json();
         setLoggedIn(data.loggedIn);
       } catch (error) {
-        //console.error("Auth check failed:", error);
         setLoggedIn(false);
       }
     };
@@ -35,12 +35,19 @@ export function LogoutButton() {
       setLoggedIn(false);
     };
 
+    // Listen for custom login event
+    const handleLoginEvent = () => {
+      checkAuth(); // Refresh auth state when login happens
+    };
+
     window.addEventListener('focus', handleFocus);
     window.addEventListener('userLoggedOut', handleLogoutEvent);
+    window.addEventListener('userLoggedIn', handleLoginEvent);
 
     return () => {
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('userLoggedOut', handleLogoutEvent);
+      window.removeEventListener('userLoggedIn', handleLoginEvent);
     };
   }, []);
 
@@ -66,7 +73,6 @@ export function LogoutButton() {
         alert("Failed to logout. Please try again.");
       }
     } catch (error) {
-      //console.error("Logout error:", error);
       alert("Something went wrong during logout.");
     }
   };

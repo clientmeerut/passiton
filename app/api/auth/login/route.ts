@@ -3,13 +3,25 @@ import { SignJWT } from 'jose';
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/lib/db';
 import { User } from '@/models/User';
+import { rateLimit } from '@/lib/rate-limit';
+import { validateEnvironment } from '@/lib/env';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
-  // Validate required environment variables
-  if (!process.env.JWT_SECRET) {
-    console.error('JWT_SECRET environment variable is not set');
+  // Rate limiting
+  const rateLimitResult = rateLimit(req, 5, 15 * 60 * 1000); // 5 attempts per 15 minutes
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many login attempts. Please try again later.' },
+      { status: 429 }
+    );
+  }
+
+  // Validate environment
+  try {
+    validateEnvironment();
+  } catch (error) {
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
@@ -18,6 +30,12 @@ export async function POST(req: NextRequest) {
   // Validate input
   if (!email || !password) {
     return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
   }
 
   // Check for admin credentials from environment variables
@@ -49,31 +67,19 @@ export async function POST(req: NextRequest) {
 
   try {
     await connectToDatabase();
-    console.log('Database connected successfully');
   } catch (dbError) {
-    console.error('Database connection failed:', dbError);
     return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
   }
 
   const user = await User.findOne({ email });
-  console.log('User lookup result:', user ? 'User found' : 'User not found', 'for email:', email);
-
   if (!user) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
-  const isPasswordCorrect = await bcrypt.compare(password, user.password);
-  console.log('Password comparison:', {
-    provided: password ? 'password provided' : 'no password',
-    stored: user.password ? 'hash exists' : 'no hash in db',
-    match: isPasswordCorrect
-  });
 
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
   if (!isPasswordCorrect) {
-    console.log('Login failed: password mismatch for user:', email);
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
-
-  console.log('Login successful for user:', email);
   const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
   const token = await new SignJWT({
     _id: user._id,

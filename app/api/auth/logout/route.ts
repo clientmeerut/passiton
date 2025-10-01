@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
 
 export async function POST() {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('=== LOGOUT DEBUG ===');
-    console.log('Logout request received');
-  }
-
   const res = NextResponse.json({ message: 'Logged out' });
 
   // Clear the token cookie with the same settings used when setting it
@@ -28,16 +23,6 @@ export async function POST() {
     maxAge: 0,
   });
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Cookie cleared with settings:', {
-      httpOnly: true,
-      secure: false, // In development, this will always be false
-      sameSite: 'lax' as const,
-      path: '/',
-      expires: new Date(0),
-      maxAge: 0,
-    });
-  }
 
   return res;
 }

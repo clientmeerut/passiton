@@ -32,6 +32,10 @@ export default function LoginPage() {
     const data = await res.json();
     if (res.ok) {
       setStatus('✅ Logged in! Redirecting...');
+
+      // Dispatch custom event to notify components
+      window.dispatchEvent(new CustomEvent('userLoggedIn'));
+
       setTimeout(() => {
         window.location.href = "/";
       }, 1000);
