@@ -29,10 +29,9 @@ export async function POST() {
   });
 
   if (process.env.NODE_ENV === 'development') {
-    const isProduction = process.env.NODE_ENV === 'production';
     console.log('Cookie cleared with settings:', {
       httpOnly: true,
-      secure: isProduction,
+      secure: false, // In development, this will always be false
       sameSite: 'lax' as const,
       path: '/',
       expires: new Date(0),
